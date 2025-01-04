@@ -6,22 +6,19 @@ from PIL import Image  # Image handling
 import fitz  # PDF reading
 import csv
 
-
-# Function to read content from a text file
+# Function to read content from a text file with error handling for encoding
 def read_txt(file_path):
-    with open(file_path, 'r', encoding='utf-8') as file:
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:  # or use 'replace'
         return file.read()
-
 
 # Function to read content from a CSV file
 def read_csv(file_path):
     content = []
-    with open(file_path, 'r', encoding='utf-8') as file:
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:  # or use 'replace'
         reader = csv.reader(file)
         for row in reader:
             content.append(' '.join(row))
     return '\n'.join(content)
-
 
 # Function to read content from a PDF file
 def read_pdf(file_path):
@@ -30,7 +27,6 @@ def read_pdf(file_path):
         for page in pdf:
             content.append(page.get_text())
     return '\n'.join(content)
-
 
 # Function to read content from various file types
 def read_file(file_path):
@@ -44,29 +40,51 @@ def read_file(file_path):
     else:
         raise ValueError(f"Unsupported file format: {file_extension}")
 
-
 # Function to calculate similarity
 def plagiarism_check(text1, text2):
     similarity_ratio = difflib.SequenceMatcher(None, text1, text2).ratio()
     return similarity_ratio * 100  # Convert to percentage
 
-
-# Function to display hand sign based on similarity using Pillow
+# Function to display hand sign based on similarity and play TTS
 def display_hand_sign(similarity):
-    if similarity > 80:
-        hand_sign_image = "D:\\rock\handsign.jpg"  # Path to high similarity hand sign image
-    elif similarity > 50:
-        hand_sign_image = "D:\\rock\handsign.jpg"  # Path to medium similarity hand sign image
-    else:
-        hand_sign_image = "D:\\rock\handsign.jpg"  # Path to low similarity hand sign image
+    # Paths for all the hand sign images
+    sign_images = {
+        "0": "D:\\rock\\world\\img0.jpg",
+        "1": "D:\\rock\\world\\img1.jpg",
+        "2": "D:\\rock\\world\\img2.jpg",
+        "3": "D:\\rock\\world\\img3.jpg",
+        "4": "D:\\rock\\world\\img4.jpg",
+        "5": "D:\\rock\\world\\img5.jpg",
+        "6": "D:\\rock\\world\\img6.jpg",
+        "7": "D:\\rock\\world\\img7.jpg",
+        "8": "D:\\rock\\world\\img8.jpg",
+        "9": "D:\\rock\\world\\img9.jpg",
+    }
 
-    # Display the image
     try:
-        img = Image.open(hand_sign_image)
-        img.show()
-    except FileNotFoundError:
-        print("Hand sign image not found!")
+        similarity_str = str(int(similarity))
+        first_digit = similarity_str[0]  # First digit
+        second_digit = similarity_str[1] if len(similarity_str) > 1 else '0'  # Second digit (or '0' if single digit)
 
+        # Get the paths for the hand sign images for both digits
+        first_sign_image_path = sign_images.get(first_digit, None)
+        second_sign_image_path = sign_images.get(second_digit, None)
+
+        if first_sign_image_path:
+            img = Image.open(first_sign_image_path)
+            img.show()
+
+        if second_sign_image_path:
+            img = Image.open(second_sign_image_path)
+            img.show()
+
+        tts_message = f"The similarity percentage is {similarity:.2f} percent."
+        tts = gTTS(tts_message, lang="en")
+        tts.save("similarity_output.mp3")
+        os.system("start similarity_output.mp3")
+
+    except FileNotFoundError as e:
+        print(f"Error: {e}. One or more hand sign images were not found!")
 
 # Main script
 if _name_ == "_main_":
@@ -99,7 +117,7 @@ if _name_ == "_main_":
         tts.save("output.mp3")
         os.system("start output.mp3")  # Play the audio file
 
-        # Display hand sign based on similarity
+        # Display hand sign and play TTS for similarity
         display_hand_sign(similarity)
 
         # Language translation
